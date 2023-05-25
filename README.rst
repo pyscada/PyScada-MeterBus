@@ -1,5 +1,5 @@
 PyScada MeterBus Extension
-========================
+==========================
 
 This is a extension for PyScada to support read and write to MeterBus devices.
 
@@ -27,7 +27,7 @@ Contribute
 
  - Issue Tracker: https://github.com/pyscada/PyScada-MeterBus/issues
  - Source Code: https://github.com/pyscada/PyScada-MeterBus
- 
+
 
 License
 -------
