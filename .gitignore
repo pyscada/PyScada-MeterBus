@@ -1,0 +1,5 @@
+*.pyc
+/pyscada_meterbus.egg-info/*
+/.idea/*
+/dist/*
+/build/*
