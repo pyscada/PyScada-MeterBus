@@ -2,8 +2,12 @@
 from __future__ import unicode_literals
 
 from pyscada.models import Device, Variable
-from pyscada.meterbus.models import MeterBusDevice, MeterBusVariable, ExtendedMeterBusVariable, \
-    ExtendedMeterBusDevice
+from pyscada.meterbus.models import (
+    MeterBusDevice,
+    MeterBusVariable,
+    ExtendedMeterBusVariable,
+    ExtendedMeterBusDevice,
+)
 
 from django.dispatch import receiver
 from django.db.models.signals import post_save
@@ -26,6 +30,10 @@ def _reinit_daq_daemons(sender, instance, **kwargs):
     elif type(instance) is MeterBusVariable:
         post_save.send_robust(sender=Variable, instance=instance.meterbus_device)
     elif type(instance) is ExtendedMeterBusVariable:
-        post_save.send_robust(sender=Variable, instance=Variable.objects.get(pk=instance.pk))
+        post_save.send_robust(
+            sender=Variable, instance=Variable.objects.get(pk=instance.pk)
+        )
     elif type(instance) is ExtendedMeterBusDevice:
-        post_save.send_robust(sender=Device, instance=Device.objects.get(pk=instance.pk))
+        post_save.send_robust(
+            sender=Device, instance=Device.objects.get(pk=instance.pk)
+        )

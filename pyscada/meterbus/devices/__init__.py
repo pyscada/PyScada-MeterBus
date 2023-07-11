@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 try:
     import serial
     import meterbus
+
     driver_ok = True
 except ImportError:
     logger.error("Cannot import meterbus or serial")
@@ -37,15 +38,22 @@ class GenericDevice(GenericHandlerDevice):
 
         try:
             ibt = meterbus.inter_byte_timeout(self._device.meterbusdevice.baudrate)
-            self.inst = serial.serial_for_url(self._device.meterbusdevice.port,
-                                       self._device.meterbusdevice.baudrate, 8, 'E', 1,
-                                       inter_byte_timeout=ibt,
-                                       timeout=self._device.meterbusdevice.timeout)
-            if self.inst is not None and ping_address(self.inst,
-                                                      self._device.meterbusdevice.address,
-                                                      self._device.meterbusdevice.retries,
-                                                      self._device.meterbusdevice.read_and_ignore_echo):
-                logger.debug('Ping success to meterbus device : %s' % self.__str__())
+            self.inst = serial.serial_for_url(
+                self._device.meterbusdevice.port,
+                self._device.meterbusdevice.baudrate,
+                8,
+                "E",
+                1,
+                inter_byte_timeout=ibt,
+                timeout=self._device.meterbusdevice.timeout,
+            )
+            if self.inst is not None and ping_address(
+                self.inst,
+                self._device.meterbusdevice.address,
+                self._device.meterbusdevice.retries,
+                self._device.meterbusdevice.read_and_ignore_echo,
+            ):
+                logger.debug("Ping success to meterbus device : %s" % self.__str__())
         except serial.serialutil.SerialException as e:
             self._not_accessible_reason = e
             result = False
@@ -68,16 +76,17 @@ class GenericDevice(GenericHandlerDevice):
 
         variable_instance.echofix = variable_instance.read_and_ignore_echo
         variable_instance.device = variable_instance.port
-        variable_instance.output = 'dump'
+        variable_instance.output = "dump"
         dump = None
 
         try:
             dump = do_char_dev(self.inst, variable_instance)
-            #logger.debug(dump)
+            # logger.debug(dump)
         except Exception:
             logger.error(traceback.format_exc())
 
         return dump
+
 
 # From mbus-serial-request-data.py from pyMeterBus/tools
 # https://github.com/ganehag/pyMeterBus/blob/master/meterbus/tools/mbus-serial-scan.py
@@ -99,7 +108,7 @@ def ping_address(ser, address, retries=5, read_echo=False):
 
 
 def do_reg_file(args):
-    with open(args.device, 'rb') as f:
+    with open(args.device, "rb") as f:
         frame = meterbus.load(f.read())
         if frame is not None:
             print(frame.to_JSON())
@@ -114,8 +123,8 @@ def do_char_dev(ser, args):
         address = args.address.upper()
 
     try:
-        #ibt = meterbus.inter_byte_timeout(args.baudrate)
-        #with serial.serial_for_url(args.device,
+        # ibt = meterbus.inter_byte_timeout(args.baudrate)
+        # with serial.serial_for_url(args.device,
         #                           args.baudrate, 8, 'E', 1,
         #                           inter_byte_timeout=ibt,
         #                           timeout=args.timeout) as ser:
@@ -125,12 +134,19 @@ def do_char_dev(ser, args):
             if ping_address(ser, address, args.retries, args.echofix):
                 meterbus.send_request_frame(ser, address, read_echo=args.echofix)
                 frame = meterbus.load(
-                    meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
+                    meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH)
+                )
             else:
-                logger.warning("Ping failed for MeterBus device with primary address : {}".format(address))
+                logger.warning(
+                    "Ping failed for MeterBus device with primary address : {}".format(
+                        address
+                    )
+                )
 
         elif meterbus.is_secondary_address(address):
-            if ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, args.retries, args.echofix):
+            if ping_address(
+                ser, meterbus.ADDRESS_NETWORK_LAYER, args.retries, args.echofix
+            ):
                 meterbus.send_select_frame(ser, address, args.echofix)
                 try:
                     frame = meterbus.load(meterbus.recv_frame(ser, 1))
@@ -141,48 +157,56 @@ def do_char_dev(ser, args):
                 assert isinstance(frame, meterbus.TelegramACK)
 
                 meterbus.send_request_frame(
-                    ser, meterbus.ADDRESS_NETWORK_LAYER, read_echo=args.echofix)
+                    ser, meterbus.ADDRESS_NETWORK_LAYER, read_echo=args.echofix
+                )
 
                 sleep(0.3)
 
                 frame = meterbus.load(
-                    meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
+                    meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH)
+                )
             else:
-                logger.warning("Ping failed for MeterBus device with secondary address : {}".format(address))
+                logger.warning(
+                    "Ping failed for MeterBus device with secondary address : {}".format(
+                        address
+                    )
+                )
 
-        if frame is not None and args.output != 'dump':
+        if frame is not None and args.output != "dump":
             recs = []
             for rec in frame.records:
-                recs.append({
-                    'value': rec.value,
-                    'unit': rec.unit
-                })
+                recs.append({"value": rec.value, "unit": rec.unit})
 
             ydata = {
-                'manufacturer': frame.body.bodyHeader.manufacturer_field.decodeManufacturer,
-                'identification': ''.join(map('{:02x}'.format, frame.body.bodyHeader.id_nr)),
-                'access_no': frame.body.bodyHeader.acc_nr_field.parts[0],
-                'medium':  frame.body.bodyHeader.measure_medium_field.parts[0],
-                'records': recs
+                "manufacturer": frame.body.bodyHeader.manufacturer_field.decodeManufacturer,
+                "identification": "".join(
+                    map("{:02x}".format, frame.body.bodyHeader.id_nr)
+                ),
+                "access_no": frame.body.bodyHeader.acc_nr_field.parts[0],
+                "medium": frame.body.bodyHeader.measure_medium_field.parts[0],
+                "records": recs,
             }
 
-            if args.output == 'json':
+            if args.output == "json":
                 return json.dumps(ydata, indent=4, sort_keys=True)
 
-            elif args.output == 'yaml':
+            elif args.output == "yaml":
+
                 def float_representer(dumper, value):
                     if int(value) == value:
-                        text = '{0:.4f}'.format(value).rstrip('0').rstrip('.')
-                        return dumper.represent_scalar(u'tag:yaml.org,2002:int', text)
+                        text = "{0:.4f}".format(value).rstrip("0").rstrip(".")
+                        return dumper.represent_scalar("tag:yaml.org,2002:int", text)
                     else:
-                        text = '{0:.4f}'.format(value).rstrip('0').rstrip('.')
-                    return dumper.represent_scalar(u'tag:yaml.org,2002:float', text)
+                        text = "{0:.4f}".format(value).rstrip("0").rstrip(".")
+                    return dumper.represent_scalar("tag:yaml.org,2002:float", text)
 
                 # Handle float and Decimal representation
                 yaml.add_representer(float, float_representer)
                 yaml.add_representer(Decimal, float_representer)
 
-                return yaml.dump(ydata, default_flow_style=False, allow_unicode=True, encoding=None)
+                return yaml.dump(
+                    ydata, default_flow_style=False, allow_unicode=True, encoding=None
+                )
 
         elif frame is not None:
             return frame.to_JSON()

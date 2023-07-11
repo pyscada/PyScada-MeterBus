@@ -11,9 +11,10 @@ logger = logging.getLogger(__name__)
 
 try:
     import meterbus
+
     driver_ok = True
 except ImportError:
-    logger.error('Cannot import meterbus')
+    logger.error("Cannot import meterbus")
     driver_ok = False
 
 
@@ -28,7 +29,7 @@ class Device(GenericDevice):
         super().__init__(device)
 
         for var in self.device.variable_set.filter(active=1):
-            if not hasattr(var, 'meterbusvariable'):
+            if not hasattr(var, "meterbusvariable"):
                 continue
             self.variables[var.pk] = var
 
@@ -40,7 +41,6 @@ class Device(GenericDevice):
         self._h.accessibility()
 
     def request_data(self):
-
         if driver_ok and self.driver_handler_ok and self._h.inst is None:
             self._h.connect()
             self._h.accessibility()
